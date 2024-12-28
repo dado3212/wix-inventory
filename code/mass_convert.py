@@ -32,9 +32,14 @@ data = {
     # Filtering collections.id doesn't seem to work, so do it manually
 }
 
+MANUAL = ['Stargazing']
+
 response = requests.post(url, headers=headers, json=data)
 for item in response.json()['products']:
     if PRINTS_COLLECTION not in item['collectionIds']:
+        continue
+    
+    if (len(MANUAL) > 0 and item['name'] not in MANUAL):
         continue
     
     # print(json.dumps(item, indent=2))

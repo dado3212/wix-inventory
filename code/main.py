@@ -14,6 +14,8 @@ def createProduct():
         "24x30 Ready-to-Hang Canvas": 400,
     }
     
+    name = input("Enter the name of the new piece: ")
+    
     url = "https://www.wixapis.com/stores/v1/products"
     headers = {
         "Content-Type": "application/json",
@@ -23,7 +25,7 @@ def createProduct():
     }
     data = {
         "product": {
-            "name": "New Product [RENAME]",
+            "name": name,
             "productType": "physical",
             "visible": False, # by default it won't be visible, you will need to update it first
             "description": "Description [EDIT]",
