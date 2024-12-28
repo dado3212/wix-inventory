@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 image_dir="images"
 
 # Max size in bytes (8MB in decimal)
-max_size=$((8 * 1000000))
+max_size=$((7.5 * 1000000))
 
 # Loop over each file in the images directory
 for image in "$image_dir"/*; do
@@ -19,7 +19,7 @@ for image in "$image_dir"/*; do
     else
       # Calculate the proportional resize percentage
       resize_factor=$(echo "scale=2; $max_size / $size" | bc)
-      echo "$(basename "$image") is over 8MB at $(echo "scale=2; $size / 1000000" | bc) MB. Scale down to $(echo "($resize_factor * 100 + 0.5)/1" | bc)%."
+      echo "$(basename "$image") is over 7.5MB at $(echo "scale=2; $size / 1000000" | bc) MB. Scale down to $(echo "($resize_factor * 100 + 0.5)/1" | bc)%."
 
       # Resize the image using the calculated resize factor
       magick "$image" -resize $(echo "$resize_factor * 100" | bc)% "$image"
@@ -29,11 +29,11 @@ for image in "$image_dir"/*; do
       new_size_mb=$(echo "scale=2; $new_size / 1000000" | bc)
       
       if [[ $new_size -le $max_size ]]; then
-        echo "$(basename "$image") - Resized to under 8 MB (final size: ${new_size_mb} MB)"
+        echo "$(basename "$image") - Resized to under 7.5 MB (final size: ${new_size_mb} MB)"
       else
         echo "$(basename "$image") - Scaled down to ${new_size_mb} MB, attempting further compression..."
         
-        # Compress the image further to fit under 8 MB
+        # Compress the image further to fit under 7.5 MB
         magick "$image" -quality 85 "$image"
 
         # Check again
