@@ -1,5 +1,5 @@
 from secret import API_KEY, ACCOUNT_ID, SITE_ID
-import requests, json, time
+import requests, json, time, webbrowser
 
 PRINTS_COLLECTION = 'fa016b57-2546-b7cc-8a30-743695fe1f5e'
 
@@ -13,8 +13,8 @@ def createProduct():
         "16x20 Ready-to-Hang Canvas": 300,
         "24x30 Ready-to-Hang Canvas": 400,
     }
-    
-    name = input("Enter the name of the new piece: ")
+
+    name = input("\033[1;4mEnter the name of the new piece:\033[0m ")
     
     url = "https://www.wixapis.com/stores/v1/products"
     headers = {
@@ -82,13 +82,18 @@ def createProduct():
         print('Updated inventory.')
     else:
         print('Something went wrong updating variant prices.')
+        return
     
     # Add to prints collection
     if addToPrints(productId):
         print('Added to prints.')
     else:
         print('Something went wrong added to prints.')
-    print(f'\n\nClick this link to finish setting it up: https://manage.wix.com/dashboard/{SITE_ID}/store/products/product/{productId}')
+        return
+    
+    print('Opening website to add description, images, and set "Show in online store" to true in the top right...')
+    time.sleep(3)
+    webbrowser.open(f'https://manage.wix.com/dashboard/{SITE_ID}/store/products/product/{productId}', new=2, autoraise=True)
 
 def addToPrints(productId):
     url = f"https://www.wixapis.com/stores/v1/collections/{PRINTS_COLLECTION}/productIds"
