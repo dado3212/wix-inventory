@@ -1,5 +1,7 @@
 from secret import API_KEY, ACCOUNT_ID, SITE_ID
-import requests
+import requests, json
+
+PRINTS_COLLECTION = '2102ce4e-5949-5f58-4b2c-40688ecd5cb3'
 
 '''
 Create a new product. There will be a base image.
@@ -55,21 +57,16 @@ def createProduct():
         return
     
     # And setup the variants
-    new_id = response.json()['product']['id']
-    
-    url = f"https://www.wixapis.com/stores/v1/products/{new_id}/variants"
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": API_KEY,
-        "wix-site-id": SITE_ID,
-    }
-    data = {
-        "variants": [{"choices": {"Size": x}, "price": products[x]} for x in products.keys()],
-    }
+    productId = response.json()['product']['id']
+    print(productId)
 
-    response = requests.patch(url, headers=headers, json=data)
-    print(response.json())
+    variantIds = getVariantIDs(productId)
+    print(variantIds)
+    updateInventory(productId, variantIds)
+    
+    # Add to prints collection
+    addToPrints(productId)
+
 
 def getProducts():
     url = "https://www.wixapis.com/stores/v1/products/query"
@@ -93,5 +90,75 @@ def getProducts():
 
     print(response.status_code)
     print(response.json())
+    
+def addToPrints(productId):
+    url = f"https://www.wixapis.com/stores/v1/collections/{PRINTS_COLLECTION}/productIds"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": API_KEY,
+        "wix-site-id": SITE_ID,
+    }
+    data = {
+        "productIds": [
+            productId
+        ]
+    }
 
+    response = requests.patch(url, headers=headers, json=data)
+    
+def updateInventory(productId, variant_ids):
+    url = f"https://www.wixapis.com/stores/v2/inventoryItems/product/{productId}"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": API_KEY,
+        "wix-site-id": SITE_ID,
+    }
+    data = {
+        "inventoryItem": {
+            "trackQuantity": True,
+            "variants": [{'variantId': x, 'quantity': 100} for x in variant_ids],
+        }
+    }
+
+    response = requests.patch(url, headers=headers, json=data)
+    print(response.json())
+    
+def getVariantIDs(productId):
+    url = "https://www.wixapis.com/stores-reader/v2/inventoryItems/query"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": API_KEY,
+        "wix-site-id": SITE_ID,
+    }
+    data = {
+        "query": {
+            "filter": json.dumps({'productId': productId}),
+            "paging": {
+                "limit": "50"
+            }
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    print(response.json())
+    
+    if (response.status_code != 200):
+        print("Failed to find item.")
+        return
+        
+    data = response.json()['inventoryItems']
+    if (len(data) != 1):
+        print("Failed to find item.")
+        return
+    
+    return [x['variantId'] for x in data[0]['variants']]
+
+# getInventory()
+# product = '47b33cd2-57fc-40f5-9466-d2b757b07894'
+# variant_ids = getVariantIDs('47b33cd2-57fc-40f5-9466-d2b757b07894')
+# updateInventory(product, variant_ids)
+# # updateInventory(
 createProduct()
