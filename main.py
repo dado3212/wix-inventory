@@ -36,7 +36,7 @@ def createProduct():
             "additionalInfoSections": [
                 {
                     "title": "Free Shipping",
-                    "description": "Will ship anywhere in the US! I live in a van and camp pretty often, so please be patient with ship times, it may be up to a month.",
+                    "description": "Will ship anywhere in the US! I live in a van and camp pretty often, so please be patient with ship times, it may be up to a month.",
                 },
             ],
             "manageVariants": True,
