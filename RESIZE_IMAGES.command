@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 image_dir="images"
 
 # Max size in bytes (8MB in decimal)
-max_size=$((7.5 * 1000000))
+max_size=7500000
 
 # Loop over each file in the images directory
 for image in "$image_dir"/*; do
@@ -17,30 +17,25 @@ for image in "$image_dir"/*; do
     if [[ $size -le $max_size ]]; then
       echo "$(basename "$image") - OK (size: $(echo "scale=2; $size / 1000000" | bc) MB)"
     else
-      # Calculate the proportional resize percentage
-      resize_factor=$(echo "scale=2; $max_size / $size" | bc)
-      echo "$(basename "$image") is over 7.5MB at $(echo "scale=2; $size / 1000000" | bc) MB. Scale down to $(echo "($resize_factor * 100 + 0.5)/1" | bc)%."
+      # If it's too big, then we need it to be a jpeg to shrink it
+      ext="${image##*.}"
+      base_name="${image%.*}"
 
-      # Resize the image using the calculated resize factor
-      magick "$image" -resize $(echo "$resize_factor * 100" | bc)% "$image"
-
-      # Verify the new file size
-      new_size=$(stat -f%z "$image")
-      new_size_mb=$(echo "scale=2; $new_size / 1000000" | bc)
-      
-      if [[ $new_size -le $max_size ]]; then
-        echo "$(basename "$image") - Resized to under 7.5 MB (final size: ${new_size_mb} MB)"
-      else
-        echo "$(basename "$image") - Scaled down to ${new_size_mb} MB, attempting further compression..."
-        
-        # Compress the image further to fit under 7.5 MB
-        magick "$image" -quality 85 "$image"
-
-        # Check again
-        final_size=$(stat -f%z "$image")
-        final_size_mb=$(echo "scale=2; $final_size / 1000000" | bc)
-        echo "$(basename "$image") - Final size after compression: ${final_size_mb} MB"
+      # Convert to JPEG if not already in JPEG format
+      if [[ $ext != "jpg" && $ext != "jpeg" ]]; then
+        echo "Converting $(basename "$image") to JPEG..."
+        magick "$image" "$base_name.jpg"
+        image="$base_name.jpg"
       fi
+
+      # Apply the size constraint
+      echo "Compressing $(basename "$image") to fit under $max_size..."
+      magick "$image" -define jpeg:extent=$max_size "$image"
+
+      # Verify the final size
+      final_size=$(stat -f%z "$image")
+      final_size_mb=$(echo "scale=2; $final_size / 1000000" | bc)
+      echo "$(basename "$image") - Final size: ${final_size_mb} MB"
     fi
   fi
 done
