@@ -21,6 +21,8 @@ The `API_KEY` is the API Key you created. The `ACCOUNT_ID` is on the right side 
 
 You'll then need to double-click the `.command` files and unblock them in Settings > Privacy & Security. You should only have to do this once.
 
+You also need to install [Homebrew](https://brew.sh/) and then do `brew install imagemagick` for the image resizing to work.
+
 You then need to automatically forward product items from Wix to Instagram. You can do this by <TODO>
 
 ## Developing
