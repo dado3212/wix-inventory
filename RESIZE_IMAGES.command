@@ -4,12 +4,25 @@ cd "$(dirname "$0")"
 # Directory containing images
 image_dir="images"
 
-# Max size in bytes (8MB in decimal)
+# Max size in bytes (7.5MB in decimal)
 max_size=7500000
+
+# Max dimensions in pixels (the largest FB will process)
+max_pixels=16384
 
 # Loop over each file in the images directory
 for image in "$image_dir"/*; do
   if [[ -f $image ]]; then
+    # Get width and height
+    width=$(magick identify -format "%w" "$image")
+    height=$(magick identify -format "%h" "$image")
+
+    # Check and resize if needed
+    if (( width > max_pixels || height > max_pixels )); then
+      echo "Resizing $(basename "$image") to max ${max_pixels}x${max_pixels}..."
+      magick "$image" -scale "${max_pixels}x${max_pixels}>" "$image"
+    fi
+
     # Get the file size in bytes
     size=$(stat -f%z "$image")
     
