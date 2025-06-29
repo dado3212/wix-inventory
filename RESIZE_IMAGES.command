@@ -8,7 +8,8 @@ image_dir="images"
 max_size=7500000
 
 # Max dimensions in pixels (the largest FB will process)
-max_pixels=16384
+max_pixels=145000000
+max_dim=16384
 
 # Loop over each file in the images directory
 for image in "$image_dir"/*; do
@@ -17,10 +18,20 @@ for image in "$image_dir"/*; do
     width=$(magick identify -format "%w" "$image")
     height=$(magick identify -format "%h" "$image")
 
+    # Determine the scaling (bc -l does integer math)
+    scale_by_pixels=$(echo "scale=10; sqrt($max_pixels / ($width * $height))" | bc -l)
+    scale_by_width=$(echo "scale=10; $max_dim / $width" | bc -l)
+    scale_by_height=$(echo "scale=10; $max_dim / $height" | bc -l)
+
+    # Pick the smallest scale
+    scale=$(echo "$scale_by_pixels $scale_by_width $scale_by_height" | awk '{s=$1; if($2<s) s=$2; if($3<s) s=$3; print s}')
+
     # Check and resize if needed
-    if (( width > max_pixels || height > max_pixels )); then
-      echo "Resizing $(basename "$image") to max ${max_pixels}x${max_pixels}..."
-      magick "$image" -scale "${max_pixels}x${max_pixels}>" "$image"
+    if (( $(echo "$scale < 1" | bc -l) )); then
+      new_width=$(printf "%.0f" $(echo "$width * $scale" | bc -l))
+      new_height=$(printf "%.0f" $(echo "$height * $scale" | bc -l))
+      echo "Resizing $(basename "$image") to ${new_width}x${new_height}..."
+      magick "$image" -scale "${new_width}x${new_height}>" "$image"
     fi
 
     # Get the file size in bytes
